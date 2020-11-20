@@ -74,14 +74,17 @@
        
         console.log("inside AR");
 
-        import * as THREE from '../threejs/three.module.js';
-        import { ARButton } from '../threejs/jsm/webxr/ARButton.js';
+        import * as THREE from '/three.module.js';
+        import { ARButton } from '/jsm/webxr/ARButton.js';
       // import { GLTFLoader } from '../threejs/jsm/loaders/GLTFLoader.js';
       // import { GUI } from '../threejs/jsm/libs/dat.gui.module.js';
 
 		let container;
     let camera, scene, renderer;
-    let truecolor = false;
+    // let truecolor = false;
+    let box;
+    let orb;
+    let data;
 
     
 
@@ -100,9 +103,14 @@
       scene = new THREE.Scene();
 
       // Box
-			var box = getBox(1, 1, 1);
+			box = getBox(1, 1, 1);
       box.name = 'box-1';
       box.position.y = box.geometry.parameters.height/2;
+
+      // // sphere
+      orb = getOrb(1, 20, 20);
+      orb.name = 'orb-1';
+      orb.position.y = orb.geometry.parameters.height/2;
       
 			// #2 create the camera
 			camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
@@ -118,6 +126,7 @@
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
       scene.add(box);
+      scene.add(orb);
 
 
 			// Add an AR button to the window
@@ -134,11 +143,20 @@
       // setInterval(logCameraRotation, 1000);
 
       // Change color when click 
-      window.addEventListener("click", function () {
-      truecolor = !truecolor;
-        console.log(truecolor);
-      box.material.color = new THREE.Color(0xffffff * Math.random());
-    });
+      // window.addEventListener("click", function () {
+      //  box.material.color = new THREE.Color(0xffffff * Math.random());
+      // });
+      window.addEventListener("click", changeColor, false);
+      
+
+      function changeColor(evt){
+        box.material.color = new THREE.Color(0xffffff * Math.random());
+        data = getCameraPos();
+        // console.log("data:", data); 
+
+        // Parte 1: aqui le envio al server de socket io la posicion de la camara
+        socket.emit('changeColorMsg', data);
+      }
 
 
       console.log("inside init");
@@ -163,12 +181,24 @@
 		// which typically means 60 times a second (60 frames per second)
 		function render() {
 
+      //********************cube moving********************
       var boxMove = scene.getObjectByName('box-1');
       boxMove.rotation.y += 0.01;
 
       boxMove.position.z = -4;
 			boxMove.position.x= 0;
       boxMove.position.y = 0;
+
+
+      //********************Sphere moving********************
+      var OrbMove = scene.getObjectByName('orb-1');
+      OrbMove.position.z = data.z;
+      OrbMove.position.x=  data.x;
+      OrbMove.position.y = data.y;
+  
+      // console.log("orb position:", data);
+      console.log("orb position:", data.y);
+
 
 			renderer.render(scene, camera);
 		}
@@ -177,7 +207,16 @@
 			const position = new THREE.Vector3();
 			position.setFromMatrixPosition(camera.matrixWorld); // x, y, z
 			console.log(position); // x, y, z
-		}
+    }
+    
+    function getCameraPos(){
+      const position = new THREE.Vector3();
+			position.setFromMatrixPosition(camera.matrixWorld); // x, y, z
+      console.log(position); // x, y, z
+      
+      return position;
+
+    }
 
 		function logCameraRotation() {
 			const rotation = new THREE.Quaternion();
@@ -196,14 +235,21 @@
 			);
 
 			return mesh;
+    }
+    
+    function getOrb(w, h, d) {
+			var geometry = new THREE.SphereGeometry(w, h, d);
+			var material = new THREE.MeshBasicMaterial({
+				color: 0xeb6134
+			});
+			var mesh = new THREE.Mesh(
+				geometry,
+				material 
+			);
+			return mesh;
 		}
 
-      </script>
-      <!-- *************************END_AR_CODE************************* -->
-
-
-      <!-- *********<script use in socketio******** -->
-     <script type="module">
+//  aqui habia un final de script y un principio de script
      
         // emited to the server the message that is in the input
       const socket = io();
@@ -233,6 +279,18 @@
         $('#messages').append($('<li>').text (msg));
 
       });
+
+      // Parte 4: Recibe el mensaje del servidor de socket io
+      socket.on('changeColorMsg', (dataMsg) => {
+
+        // update posicion y lo usa para el orbMove.position en render()
+        data = dataMsg;
+
+        console.log("dataMsg:", dataMsg);
+      });
+   
+
+
 
     </script>
   </body>
