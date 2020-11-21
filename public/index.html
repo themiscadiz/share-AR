@@ -103,12 +103,12 @@
       scene = new THREE.Scene();
 
       // Box
-			box = getBox(1, 1, 1);
+			box = getBox(.20, .20, .20);
       box.name = 'box-1';
       box.position.y = box.geometry.parameters.height/2;
 
       // // sphere
-      orb = getOrb(1, 20, 20);
+      orb = getOrb(.05, 20, 20);
       orb.name = 'orb-1';
       orb.position.y = orb.geometry.parameters.height/2;
       
@@ -151,11 +151,21 @@
 
       function changeColor(evt){
         box.material.color = new THREE.Color(0xffffff * Math.random());
-        data = getCameraPos();
-        // console.log("data:", data); 
+        // data = getCameraPos();
+        // // console.log("data:", data); 
 
-        // Parte 1: aqui le envio al server de socket io la posicion de la camara
-        socket.emit('changeColorMsg', data);
+        // // Parte 1: aqui le envio al server de socket io la posicion de la camara
+        // socket.emit('changePositionMsg', data);
+
+        changePosition();
+      }
+
+      function changePosition(){
+      data = getCameraPos();
+      // console.log("data:", data); 
+
+      // Parte 1: aqui le envio al server de socket io la posicion de la camara
+      socket.emit('changePositionMsg', data);
       }
 
 
@@ -185,7 +195,7 @@
       var boxMove = scene.getObjectByName('box-1');
       boxMove.rotation.y += 0.01;
 
-      boxMove.position.z = -4;
+      boxMove.position.z = -1;
 			boxMove.position.x= 0;
       boxMove.position.y = 0;
 
@@ -281,7 +291,7 @@
       });
 
       // Parte 4: Recibe el mensaje del servidor de socket io
-      socket.on('changeColorMsg', (dataMsg) => {
+      socket.on('changePositionMsg', (dataMsg) => {
 
         // update posicion y lo usa para el orbMove.position en render()
         data = dataMsg;

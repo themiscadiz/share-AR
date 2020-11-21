@@ -25,11 +25,11 @@ io.on('connection', (socket) => {
     });
 
     // Parte:2 recibe la posicion de la camara
-    socket.on('changeColorMsg', (data) => {
-        console.log(`changeColorMsg: ${data}`);
-        
+    socket.on('changePositionMsg', (data) => {
+        console.log(`changePositionMsg: ${data}`);
+
         // Parte 3: envia el mensaje al otro usuario
-        io.emit('changeColorMsg', data);
+        io.emit('changePositionMsg', data);
     });
 
 
